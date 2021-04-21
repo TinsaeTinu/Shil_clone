@@ -32,6 +32,7 @@ public class ScreenA extends AppCompatActivity {
         mylist.add( prefs.getString("name",""));
         mylist.add( prefs.getString("country_code",""));
         mylist.add( prefs.getString("phone_num",""));
+        mylist.add( prefs.getString("Image_Src",""));
 
         lv = (ListView) findViewById(R.id.lv_first);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,mylist);
@@ -41,6 +42,7 @@ public class ScreenA extends AppCompatActivity {
         Log.v("Cache Data :",  prefs.getString("name",""));
         Log.v("Cache Data :",  prefs.getString("country_code",""));
         Log.v("Cache Data :",  prefs.getString("phone_num",""));
+        Log.v("Cache Data :",  prefs.getString("Image_Src",""));
 
 
 

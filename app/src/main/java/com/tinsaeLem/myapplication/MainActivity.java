@@ -3,12 +3,17 @@ package com.tinsaeLem.myapplication;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -22,6 +27,10 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,11 +39,14 @@ public class MainActivity extends AppCompatActivity {
     public TextView  tv_country;
     public TextView  tv_phone;
     public ListView list_first;
+    public ImageView viewImage;
 
     private String val_name;
     private String val_country;
     private String val_phone;
     public  SharedPreferences prefs;
+    public  String picturePath;
+    public Bitmap thumbnail;
 
     public MainActivity() {
     }
@@ -55,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
         // ASSIGMENT
         bt = (Button) findViewById(R.id.button);
+        viewImage = (ImageView) findViewById(R.id.imageView);
         bt_image = (Button) findViewById(R.id.bt_image);
         tv_name = (TextView) findViewById(R.id.tv_name);
         tv_phone = (TextView) findViewById(R.id.tv_phone);
@@ -81,11 +94,13 @@ public class MainActivity extends AppCompatActivity {
                         Log.v("Country_Code: " , val_country);
                         Log.v("Phone_num: " , val_phone);
                         // save to cache
-                        SharedPreferences prefs = getSharedPreferences("UserData", MODE_PRIVATE);
+                        prefs = getSharedPreferences("UserData", MODE_PRIVATE);
                         SharedPreferences.Editor editor = prefs.edit();
                         editor.putString("name", val_name);
                         editor.putString("country_code", val_country);
                         editor.putString("phone_num", val_phone);
+                        editor.putString("Image_Src",picturePath);
+
                         editor.commit();
 
                         // show data
@@ -117,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
                     File f = new File(android.os.Environment.getExternalStorageDirectory(), "temp.jpg");
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
                     startActivityForResult(intent, 1);
-                    
+
                 }
                 else if (options[item].equals("Choose from Gallery"))
                 {
@@ -130,6 +145,62 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         builder.show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == 1) {
+                File f = new File(Environment.getExternalStorageDirectory().toString());
+                for (File temp : f.listFiles()) {
+                    if (temp.getName().equals("temp.jpg")) {
+                        f = temp;
+                        break;
+                    }
+                }
+                try {
+                    Bitmap bitmap;
+                    BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+                    bitmap = BitmapFactory.decodeFile(f.getAbsolutePath(),
+                            bitmapOptions);
+                    viewImage.setImageBitmap(bitmap);
+                    String path = android.os.Environment
+                            .getExternalStorageDirectory()
+                            + File.separator
+                            + "Phoenix" + File.separator + "default";
+                    f.delete();
+                    OutputStream outFile = null;
+                    File file = new File(path, String.valueOf(System.currentTimeMillis()) + ".jpg");
+                    try {
+                        outFile = new FileOutputStream(file);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outFile);
+                        outFile.flush();
+                        outFile.close();
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (requestCode == 2) {
+                Uri selectedImage = data.getData();
+                String[] filePath = { MediaStore.Images.Media.DATA };
+                Cursor c = getContentResolver().query(selectedImage,filePath, null, null, null);
+                c.moveToFirst();
+                int columnIndex = c.getColumnIndex(filePath[0]);
+                picturePath = c.getString(columnIndex);
+                c.close();
+                thumbnail = (BitmapFactory.decodeFile(picturePath));
+                Log.w("path of image from gallery......******************.........", picturePath+"");
+                viewImage.setImageBitmap(thumbnail);
+
+            }
+        }
     }
 
 }
